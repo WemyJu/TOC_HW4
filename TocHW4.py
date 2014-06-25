@@ -38,7 +38,7 @@ if __name__ == '__main__':
         
         for record in data:
             position = findTheNameOfRoad(record['土地區段位置或建物區門牌'])
-            if position == 0:
+            if position <= 0:
                 continue
             name_of_road = record['土地區段位置或建物區門牌'][0:position+1]
             if name_of_road in trade_record:
@@ -48,7 +48,7 @@ if __name__ == '__main__':
                     trade_record[name_of_road].update({record['交易年月']:1})
                 if record['總價元'] > trade_record[name_of_road]['max_price']:
                     trade_record[name_of_road]['max_price'] = record['總價元']
-                if record['總價元'] < trade_record[name_of_road]['min_price']:
+                elif record['總價元'] < trade_record[name_of_road]['min_price']:
                     trade_record[name_of_road]['min_price'] = record['總價元']
             else:
                 trade_record[name_of_road] = {record['交易年月']:1, 'max_price':record['總價元'], 'min_price':record['總價元'], 'id':record_id}
@@ -67,8 +67,8 @@ if __name__ == '__main__':
                 index = max_distinct_road.index(name_of_road)
                 if record['總價元'] > max_price[index]:
                     max_price[index] = record['總價元']
-                if record['總價元'] < max_price[index]:
-                    max_price[index] = record['總價元']
+                elif record['總價元'] < min_price[index]:
+                    min_price[index] = record['總價元']
             elif len(trade_record[name_of_road]) == num_of_month:
                 max_distinct_road.append(name_of_road)
                 max_price.append(trade_record[name_of_road]['max_price'])

@@ -2,18 +2,21 @@ import json
 import urllib.request
 import sys
 import re
+from operator import itemgetter
 
 def findTheNameOfRoad(address):
     position = 0
-    position_for_road = address.find(match_with_road)
-    position_for_avenue = address.find(match_with_avenue)
-    position_for_street = address.find(match_with_street)
+    position_for_road = address.find('路')
+    position_for_avenue = address.find('大道')
+    position_for_street = address.find('街')
     if position < position_for_road:
         position = position_for_road
     if position < position_for_avenue:
         position = position_for_avenue
     if position < position_for_street:
         position = position_for_street
+    if position == 0:
+        position = address.find('巷')
     return position
 
 if __name__ == '__main__':
@@ -23,17 +26,15 @@ if __name__ == '__main__':
     #else:
     #    url = sys.argv[1]
     #    data = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
-        url = 'http://www.datagarage.io/api/5385b858e7259bb37d926912'
+        url = 'http://www.datagarage.io/api/5385b69de7259bb37d925971'
         data = json.loads(urllib.request.urlopen(url).read().decode('utf-8'))
         
         trade_record = dict()
         max_distinct_road = [""]
-        number = 0
         max_price = [0]
         min_price = [float('inf')]
-        match_with_road = '路'
-        match_with_avenue = '大道'
-        match_with_street = '街'
+        num_of_month = 0
+        record_id = 0
         
         for record in data:
             position = findTheNameOfRoad(record['土地區段位置或建物區門牌'])
@@ -50,14 +51,15 @@ if __name__ == '__main__':
                 if record['總價元'] < trade_record[name_of_road]['min_price']:
                     trade_record[name_of_road]['min_price'] = record['總價元']
             else:
-                trade_record[name_of_road] = {record['交易年月']:1, 'max_price':record['總價元'], 'min_price':record['總價元']}
+                trade_record[name_of_road] = {record['交易年月']:1, 'max_price':record['總價元'], 'min_price':record['總價元'], 'id':record_id}
+                record_id += 1
 
-            if len(trade_record[name_of_road]) > number:
+            if len(trade_record[name_of_road]) > num_of_month:
                 if len(max_distinct_road) > 1:
                     del max_distinct_road[1:]
                     del max_price[1:]
                     del min_price[1:]
-                number = len(trade_record[name_of_road])
+                num_of_month = len(trade_record[name_of_road])
                 max_distinct_road[0] = name_of_road
                 max_price[0] = trade_record[name_of_road]['max_price']
                 min_price[0] = trade_record[name_of_road]['min_price']
@@ -67,11 +69,16 @@ if __name__ == '__main__':
                     max_price[index] = record['總價元']
                 if record['總價元'] < max_price[index]:
                     max_price[index] = record['總價元']
-            elif len(trade_record[name_of_road]) == number:
+            elif len(trade_record[name_of_road]) == num_of_month:
                 max_distinct_road.append(name_of_road)
                 max_price.append(trade_record[name_of_road]['max_price'])
                 min_price.append(trade_record[name_of_road]['min_price'])
-        
+
+        extract_data = []
         for i in range(0, len(max_distinct_road), 1):
-            print(max_distinct_road[i] + ", 最高成交價: " + str(max_price[i]) + ", 最低成交價: " + str(min_price[i]))
+            extract_data.append((max_distinct_road[i], max_price[i], min_price[i], trade_record[max_distinct_road[i]]['id']))
+        sort_extract_data = sorted(extract_data, key = lambda x : x[3])
+
+        for i in range(0, len(max_distinct_road), 1):
+            print(sort_extract_data[i][0] + ", 最高成交價: " + str(sort_extract_data[i][1]) + ", 最低成交價: " + str(sort_extract_data[i][2]))
 
